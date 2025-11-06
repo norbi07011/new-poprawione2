@@ -17,12 +17,14 @@ import { formatCurrency, formatDate } from '@/lib/invoice-utils';
 import { calculateNetFromGross, calculateGrossFromNet, type VATRate } from '@/lib/vat-calculator';
 import { toast } from 'sonner';
 import { scanReceipt, type ReceiptData } from '@/lib/receiptScanner';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export default function Expenses() {
   const { t, i18n } = useTranslation();
   const { isMuted } = useAudio();
   const { expenses, loading, createExpense, updateExpense, deleteExpense } = useExpenses();
   const { clients } = useClients();
+  const { showError, handleAsync } = useErrorHandler();
   
   const [showDialog, setShowDialog] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -101,12 +103,18 @@ export default function Expenses() {
     e.preventDefault();
     
     if (!formData.supplier || !formData.amount_net) {
-      toast.error('Wypełnij wymagane pola');
+      toast.error('⚠️ Wypełnij wymagane pola: Dostawca i Kwota');
       return;
     }
 
     const inputAmount = parseFloat(formData.amount_net);
     const vatRate = parseFloat(formData.vat_rate);
+    
+    if (isNaN(inputAmount) || inputAmount <= 0) {
+      toast.error('⚠️ Kwota musi być liczbą większą od zera');
+      return;
+    }
+    
     const { net, vat, gross } = calculateAmounts(inputAmount, vatRate);
 
     const expenseData = {
@@ -127,21 +135,29 @@ export default function Expenses() {
       attachments: attachments,
     };
 
-    try {
-      if (editingExpense) {
-        await updateExpense(editingExpense.id, expenseData);
-        toast.success('Wydatek zaktualizowany');
-      } else {
-        await createExpense(expenseData);
-        toast.success('Wydatek dodany');
+    // Użyj profesjonalnej obsługi błędów
+    await handleAsync(
+      async () => {
+        if (editingExpense) {
+          await updateExpense(editingExpense.id, expenseData);
+        } else {
+          await createExpense(expenseData);
+        }
+        
+        setShowDialog(false);
+        resetForm();
+      },
+      {
+        successMessage: editingExpense 
+          ? '✅ Wydatek zaktualizowany' 
+          : '✅ Wydatek dodany',
+        context: {
+          action: editingExpense ? 'update_expense' : 'create_expense',
+          supplier: formData.supplier,
+          amount: gross,
+        },
       }
-      
-      setShowDialog(false);
-      resetForm();
-    } catch (error) {
-      toast.error('Błąd podczas zapisywania');
-      console.error(error);
-    }
+    );
   };
 
   // Funkcja do konwersji pliku na base64
@@ -326,7 +342,13 @@ export default function Expenses() {
 
     } catch (error) {
       console.error('OCR Error:', error);
-      toast.error('Nie udało się odczytać paragonu. Spróbuj zrobić wyraźniejsze zdjęcie.');
+      
+      // Użyj profesjonalnej obsługi błędów
+      showError(error, {
+        action: 'OCR Scanning',
+        fileName: file.name,
+        fileSize: file.size,
+      });
     } finally {
       setIsScanning(false);
       setScanProgress(0);
@@ -365,13 +387,22 @@ export default function Expenses() {
       return;
     }
     
-    try {
-      await deleteExpense(id);
-      toast.success('Wydatek usunięty');
-    } catch (error) {
-      toast.error('Błąd podczas usuwania');
-      console.error(error);
-    }
+    const expense = expenses?.find(e => e.id === id);
+    
+    await handleAsync(
+      async () => {
+        await deleteExpense(id);
+      },
+      {
+        successMessage: '🗑️ Wydatek usunięty',
+        context: {
+          action: 'delete_expense',
+          expenseId: id,
+          supplier: expense?.supplier,
+          amount: expense?.amount_gross,
+        },
+      }
+    );
   };
 
   const resetForm = () => {

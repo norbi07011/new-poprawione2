@@ -38,6 +38,17 @@ export async function scanReceipt(
   
   console.log('📷 Rozpoczynam skanowanie paragonu:', imageFile.name);
   
+  // Walidacja rozmiaru pliku (max 10MB)
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  if (imageFile.size > MAX_FILE_SIZE) {
+    throw new Error(`Plik jest za duży (${(imageFile.size / 1024 / 1024).toFixed(1)}MB). Maksymalny rozmiar to 10MB.`);
+  }
+  
+  // Walidacja typu pliku
+  if (!imageFile.type.startsWith('image/')) {
+    throw new Error('Niewłaściwy typ pliku. Wybierz zdjęcie (JPG, PNG, WEBP).');
+  }
+  
   try {
     // Rozpoznaj tekst z OCR
     const result = await Tesseract.recognize(imageFile, language, {
@@ -63,7 +74,18 @@ export async function scanReceipt(
 
   } catch (error) {
     console.error('❌ Błąd skanowania paragonu:', error);
-    throw new Error('Nie udało się odczytać paragonu. Spróbuj zrobić wyraźniejsze zdjęcie.');
+    
+    // Bardziej szczegółowe komunikaty błędów
+    if (error instanceof Error) {
+      if (error.message.includes('Network')) {
+        throw new Error('Brak połączenia internetowego. OCR wymaga dostępu do sieci przy pierwszym użyciu.');
+      }
+      if (error.message.includes('timeout')) {
+        throw new Error('Przekroczono czas oczekiwania. Spróbuj z mniejszym zdjęciem.');
+      }
+    }
+    
+    throw new Error('Nie udało się odczytać paragonu. Spróbuj zrobić wyraźniejsze zdjęcie lub zmniejsz rozmiar pliku.');
   }
 }
 
@@ -200,6 +222,10 @@ function isValidDate(dateString: string): boolean {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return false;
   
+  // Sprawdź czy rok jest realistyczny (nie wcześniej niż 2000, nie później niż 2100)
+  const year = date.getFullYear();
+  if (year < 2000 || year > 2100) return false;
+  
   // Sprawdź czy data nie jest w przyszłości i nie starsza niż 10 lat
   const now = new Date();
   const tenYearsAgo = new Date();
@@ -227,19 +253,16 @@ export async function preprocessImage(file: File): Promise<File> {
           return;
         }
 
-        // Skaluj jeśli obraz jest za duży (max 2000px)
+        // Skaluj jeśli obraz jest za duży (max 2000px) - PERFORMANCE
         let width = img.width;
         let height = img.height;
         const maxSize = 2000;
 
         if (width > maxSize || height > maxSize) {
-          if (width > height) {
-            height = (height / width) * maxSize;
-            width = maxSize;
-          } else {
-            width = (width / height) * maxSize;
-            height = maxSize;
-          }
+          const scale = Math.min(maxSize / width, maxSize / height);
+          width = Math.floor(width * scale);
+          height = Math.floor(height * scale);
+          console.log(`📐 Skalowanie obrazu: ${img.width}x${img.height} → ${width}x${height}`);
         }
 
         canvas.width = width;

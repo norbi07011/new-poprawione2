@@ -688,6 +688,8 @@ export default function Expenses() {
                         onClick={() => scanInputRef.current?.click()}
                         disabled={isScanning}
                         className="flex items-center gap-2 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                        title="Automatycznie odczytaj dane z paragonu (OCR)"
+                        aria-label="Skanuj paragon z rozpoznawaniem tekstu OCR"
                       >
                         {isScanning ? (
                           <>

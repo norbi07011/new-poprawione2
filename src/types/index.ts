@@ -137,3 +137,19 @@ export interface InvoiceSettings {
   selectedTemplateId: string;
   customTemplates: InvoiceTemplate[];
 }
+
+// Appointment (Spotkanie/Wizyta)
+export interface Appointment {
+  id: string;
+  title: string; // Tytuł spotkania (np. "Spotkanie z klientem Jan Kowalski")
+  client_id?: string; // Opcjonalnie powiązanie z klientem
+  date: string; // Data spotkania (YYYY-MM-DD)
+  time: string; // Godzina (HH:mm)
+  duration: number; // Czas trwania w minutach (np. 60, 90, 120)
+  location?: string; // Lokalizacja (adres lub "Online" / "Biuro")
+  description?: string; // Opis/notatki
+  reminder_minutes: number; // Przypomnienie X minut przed (0 = bez przypomnienia)
+  status: 'scheduled' | 'completed' | 'cancelled'; // Status spotkania
+  created_at: string;
+  updated_at: string;
+}

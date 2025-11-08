@@ -3,7 +3,7 @@ import { Toaster } from 'sonner';
 import './i18n';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { FileText, Users, Package, ChartBar, Gear, Download, DeviceMobile, Car, Receipt, Clock, File } from '@phosphor-icons/react';
+import { FileText, Users, Package, ChartBar, Gear, Download, DeviceMobile, Car, Receipt, Clock, File, Calendar } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AudioProvider } from '@/contexts/AudioContext';
@@ -19,8 +19,9 @@ import Kilometers from './pages/Kilometers';
 import { BTWAangifte } from './pages/BTWAangifte';
 import Expenses from './pages/Expenses';
 import Documents from './pages/Documents.tsx';
+import Appointments from './pages/Appointments';
 
-type Page = 'reports' | 'invoices' | 'invoices-new' | 'clients' | 'products' | 'expenses' | 'kilometers' | 'timesheets' | 'btw' | 'settings' | 'documents';
+type Page = 'reports' | 'invoices' | 'invoices-new' | 'clients' | 'products' | 'expenses' | 'kilometers' | 'timesheets' | 'btw' | 'settings' | 'documents' | 'appointments';
 
 function App() {
   return (
@@ -302,6 +303,7 @@ Adres sieciowy: http://192.168.178.75:5002/
     { id: 'reports' as Page, icon: ChartBar, label: t('nav.reports') },
     { id: 'invoices' as Page, icon: FileText, label: t('nav.invoices') },
     { id: 'documents' as Page, icon: File, label: '📄 Dokumenty' },
+    { id: 'appointments' as Page, icon: Calendar, label: '📅 Spotkania' },
     { id: 'clients' as Page, icon: Users, label: t('nav.clients') },
     { id: 'products' as Page, icon: Package, label: t('nav.products') },
     { id: 'expenses' as Page, icon: Receipt, label: t('nav.expenses') },
@@ -323,6 +325,8 @@ Adres sieciowy: http://192.168.178.75:5002/
         return <InvoiceForm onNavigate={handleNavigate} />;
       case 'documents':
         return <Documents />;
+      case 'appointments':
+        return <Appointments />;
       case 'clients':
         return <Clients />;
       case 'products':

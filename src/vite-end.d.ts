@@ -19,6 +19,10 @@ interface ElectronAPI {
     deleteProduct: (id: string) => Promise<boolean>;
     getCompany: () => Promise<any>;
     updateCompany: (company: any) => Promise<any>;
+    getAppointments: () => Promise<any[]>;
+    createAppointment: (appointment: any) => Promise<any>;
+    updateAppointment: (id: string, appointment: any) => Promise<any>;
+    deleteAppointment: (id: string) => Promise<boolean>;
   };
   fileSystem: {
     savePDF: (filename: string, buffer: ArrayBuffer) => Promise<string>;

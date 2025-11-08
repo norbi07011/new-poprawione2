@@ -33,6 +33,11 @@ declare global {
         createBTW: (declaration: any) => Promise<any>;
         updateBTW: (id: string, declaration: any) => Promise<any>;
         deleteBTW: (id: string) => Promise<boolean>;
+        // Appointments
+        getAppointments: () => Promise<any[]>;
+        createAppointment: (appointment: any) => Promise<any>;
+        updateAppointment: (id: string, appointment: any) => Promise<any>;
+        deleteAppointment: (id: string) => Promise<boolean>;
       };
       fileSystem: {
         savePDF: (filename: string, buffer: ArrayBuffer) => Promise<string>;

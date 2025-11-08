@@ -923,6 +923,99 @@ export function useBTW() {
   };
 }
 
+// Hook dla spotkań (Appointments)
+export function useAppointments() {
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAppointments = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (isElectron() && window.electronAPI?.database?.getAppointments) {
+        const data = await window.electronAPI.database.getAppointments();
+        setAppointments(data || []);
+      } else {
+        const stored = await getStorageItem('appointments');
+        setAppointments(stored ? JSON.parse(stored) : []);
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const createAppointment = useCallback(async (appointment: any) => {
+    try {
+      if (isElectron() && window.electronAPI?.database?.createAppointment) {
+        const newAppointment = await window.electronAPI.database.createAppointment(appointment);
+        await fetchAppointments();
+        return newAppointment;
+      } else {
+        const newAppointment = { 
+          ...appointment, 
+          id: Date.now().toString(), 
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        const updated = [...appointments, newAppointment];
+        await setStorageItem('appointments', JSON.stringify(updated));
+        setAppointments(updated);
+        return newAppointment;
+      }
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      throw error;
+    }
+  }, [appointments, fetchAppointments]);
+
+  const updateAppointment = useCallback(async (id: string, appointment: any) => {
+    try {
+      if (isElectron() && window.electronAPI?.database?.updateAppointment) {
+        await window.electronAPI.database.updateAppointment(id, appointment);
+        await fetchAppointments();
+      } else {
+        const updated = appointments.map(a => a.id === id ? { ...a, ...appointment, updated_at: new Date().toISOString() } : a);
+        await setStorageItem('appointments', JSON.stringify(updated));
+        setAppointments(updated);
+      }
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      throw error;
+    }
+  }, [appointments, fetchAppointments]);
+
+  const deleteAppointment = useCallback(async (id: string) => {
+    try {
+      if (isElectron() && window.electronAPI?.database?.deleteAppointment) {
+        await window.electronAPI.database.deleteAppointment(id);
+        await fetchAppointments();
+      } else {
+        const updated = appointments.filter(a => a.id !== id);
+        await setStorageItem('appointments', JSON.stringify(updated));
+        setAppointments(updated);
+      }
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      throw error;
+    }
+  }, [appointments, fetchAppointments]);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
+
+  return {
+    appointments,
+    loading,
+    createAppointment,
+    updateAppointment,
+    deleteAppointment,
+    refetch: fetchAppointments
+  };
+}
+
 // Pomocnicza funkcja do konwersji na CSV
 function convertToCSV(data: any[]): string {
   if (!data || data.length === 0) return '';

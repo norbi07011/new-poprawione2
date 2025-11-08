@@ -108,7 +108,7 @@ export default function Appointments() {
     });
   }, [appointments, statusFilter, searchTerm]);
 
-  const handleOpenDialog = (appointment?: Appointment) => {
+  const handleOpenDialog = (appointment?: Appointment, prefilledDate?: string) => {
     if (appointment) {
       setEditingAppointment(appointment);
       setFormData({
@@ -124,11 +124,12 @@ export default function Appointments() {
       });
     } else {
       setEditingAppointment(null);
+      const today = new Date().toISOString().split('T')[0];
       setFormData({
         title: '',
         client_id: '',
-        date: '',
-        time: '',
+        date: prefilledDate || today,
+        time: '09:00',
         duration: 60,
         location: '',
         description: '',
@@ -212,19 +213,7 @@ export default function Appointments() {
   };
 
   const handleDateClick = (date: string) => {
-    setFormData({
-      title: '',
-      client_id: '',
-      date: date,
-      time: '09:00',
-      duration: 60,
-      location: '',
-      description: '',
-      reminder_minutes: 30,
-      status: 'scheduled',
-    });
-    setEditingAppointment(null);
-    setIsDialogOpen(true);
+    handleOpenDialog(undefined, date);
   };
 
   const previousMonth = () => {

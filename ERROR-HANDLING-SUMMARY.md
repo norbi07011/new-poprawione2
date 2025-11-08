@@ -113,28 +113,6 @@ if (isNaN(inputAmount) || inputAmount <= 0) {
 ```
 
 ✅ **Zapis wydatku z handleAsync:**
-```typescript
-await handleAsync(
-  async () => {
-    if (editingExpense) {
-      await updateExpense(editingExpense.id, expenseData);
-    } else {
-      await createExpense(expenseData);
-    }
-    setShowDialog(false);
-    resetForm();
-  },
-  {
-    successMessage: editingExpense 
-      ? '✅ Wydatek zaktualizowany' 
-      : '✅ Wydatek dodany',
-    context: {
-      action: 'save_expense',
-      supplier: formData.supplier,
-      amount: gross,
-    },
-  }
-);
 ```
 
 ✅ **Usuwanie z context tracking:**

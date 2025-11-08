@@ -150,6 +150,27 @@ export interface Appointment {
   description?: string; // Opis/notatki
   reminder_minutes: number; // Przypomnienie X minut przed (0 = bez przypomnienia)
   status: 'scheduled' | 'completed' | 'cancelled'; // Status spotkania
+  
+  // Zaawansowane funkcje
+  category?: 'consultation' | 'meeting' | 'inspection' | 'estimate' | 'other'; // Kategoria spotkania
+  color?: string; // Kolor w kalendarzu (hex: #FF5733)
+  recurring?: {
+    enabled: boolean;
+    frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly'; // Częstotliwość
+    interval: number; // Co ile (np. co 2 tygodnie)
+    end_date?: string; // Data zakończenia powtórzeń
+    occurrences?: number; // Lub liczba powtórzeń
+    parent_id?: string; // ID rodzica dla powtarzających się spotkań
+  };
+  attendees?: string[]; // Lista uczestników (emails)
+  attachments?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    size: number;
+    type: string;
+  }>;
+  
   created_at: string;
   updated_at: string;
 }

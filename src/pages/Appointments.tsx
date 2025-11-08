@@ -11,9 +11,19 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, PencilSimple, Trash, Calendar, MagnifyingGlass, Check, X, Clock, MapPin, Bell, CaretLeft, CaretRight, List } from '@phosphor-icons/react';
+import { Switch } from '@/components/ui/switch';
+import { Plus, PencilSimple, Trash, Calendar, MagnifyingGlass, Check, X, Clock, MapPin, Bell, CaretLeft, CaretRight, List, Download, Repeat, Tag, NavigationArrow } from '@phosphor-icons/react';
 import { Appointment } from '@/types';
 import { toast } from 'sonner';
+import { 
+  exportToICS, 
+  generateRecurringAppointments, 
+  getCategoryColor, 
+  getCategoryLabel,
+  getGoogleMapsLink,
+  checkAppointmentConflict,
+  suggestFreeSlots
+} from '@/lib/calendarUtils';
 
 export default function Appointments() {
   const { t } = useTranslation();
@@ -74,6 +84,13 @@ export default function Appointments() {
     description: '',
     reminder_minutes: 30,
     status: 'scheduled' as 'scheduled' | 'completed' | 'cancelled',
+    category: 'meeting' as 'consultation' | 'meeting' | 'inspection' | 'estimate' | 'other',
+    color: '#10B981',
+    recurring_enabled: false,
+    recurring_frequency: 'weekly' as 'daily' | 'weekly' | 'biweekly' | 'monthly',
+    recurring_interval: 1,
+    recurring_end_date: '',
+    recurring_occurrences: 10,
   });
 
   // Powiadomienia - sprawdzaj co minutę
@@ -168,6 +185,13 @@ export default function Appointments() {
         description: appointment.description || '',
         reminder_minutes: appointment.reminder_minutes,
         status: appointment.status,
+        category: appointment.category || 'meeting',
+        color: appointment.color || getCategoryColor(appointment.category),
+        recurring_enabled: appointment.recurring?.enabled || false,
+        recurring_frequency: appointment.recurring?.frequency || 'weekly',
+        recurring_interval: appointment.recurring?.interval || 1,
+        recurring_end_date: appointment.recurring?.end_date || '',
+        recurring_occurrences: appointment.recurring?.occurrences || 10,
       });
     } else {
       console.log('➕ Creating new appointment');
@@ -183,6 +207,13 @@ export default function Appointments() {
         description: '',
         reminder_minutes: 30,
         status: 'scheduled' as 'scheduled' | 'completed' | 'cancelled',
+        category: 'meeting' as 'consultation' | 'meeting' | 'inspection' | 'estimate' | 'other',
+        color: '#10B981',
+        recurring_enabled: false,
+        recurring_frequency: 'weekly' as 'daily' | 'weekly' | 'biweekly' | 'monthly',
+        recurring_interval: 1,
+        recurring_end_date: '',
+        recurring_occurrences: 10,
       };
       console.log('📋 Form data:', newFormData);
       setFormData(newFormData);
@@ -200,13 +231,51 @@ export default function Appointments() {
       return;
     }
 
+    // Sprawdź kolizje terminów
+    const appointmentData: any = {
+      ...formData,
+      id: editingAppointment?.id || Date.now().toString(),
+      category: formData.category,
+      color: formData.color,
+      recurring: formData.recurring_enabled ? {
+        enabled: true,
+        frequency: formData.recurring_frequency,
+        interval: formData.recurring_interval,
+        end_date: formData.recurring_end_date || undefined,
+        occurrences: formData.recurring_occurrences,
+      } : undefined,
+    };
+
+    const conflict = checkAppointmentConflict(appointmentData, appointments);
+    if (conflict && !editingAppointment) {
+      const confirmOverride = confirm(
+        `⚠️ Kolizja terminów!\n\nTo spotkanie nakłada się na:\n"${conflict.title}"\no ${conflict.time}\n\nCzy na pewno dodać?`
+      );
+      if (!confirmOverride) return;
+    }
+
     try {
       if (editingAppointment) {
-        await updateAppointment(editingAppointment.id, formData);
+        await updateAppointment(editingAppointment.id, appointmentData);
         toast.success('✅ Spotkanie zaktualizowane');
       } else {
-        await createAppointment(formData);
-        toast.success('✅ Spotkanie dodane');
+        await createAppointment(appointmentData);
+        
+        // Generuj powtarzające się spotkania jeśli włączone
+        if (formData.recurring_enabled) {
+          const recurringAppointments = generateRecurringAppointments(
+            appointmentData,
+            formData.recurring_occurrences
+          );
+          
+          for (const recAppointment of recurringAppointments) {
+            await createAppointment(recAppointment);
+          }
+          
+          toast.success(`✅ Utworzono ${recurringAppointments.length + 1} spotkań (seria)`);
+        } else {
+          toast.success('✅ Spotkanie dodane');
+        }
       }
       setIsDialogOpen(false);
     } catch (error) {
@@ -575,19 +644,55 @@ export default function Appointments() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
+                            {/* Eksport do .ics */}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                const clientName = clients.find(c => c.id === appointment.client_id)?.name;
+                                exportToICS(appointment, clientName);
+                                toast.success('📅 Plik .ics pobrany!');
+                              }}
+                              className="hover:bg-green-100 dark:hover:bg-green-900/40 hover:scale-110 transition-all"
+                              title="Eksportuj do kalendarza (.ics)"
+                            >
+                              <Download className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            </Button>
+                            
+                            {/* Google Maps (jeśli jest lokalizacja) */}
+                            {appointment.location && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  const mapsUrl = getGoogleMapsLink(appointment.location);
+                                  window.open(mapsUrl, '_blank');
+                                }}
+                                className="hover:bg-orange-100 dark:hover:bg-orange-900/40 hover:scale-110 transition-all"
+                                title="Otwórz w Google Maps"
+                              >
+                                <NavigationArrow className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                              </Button>
+                            )}
+                            
+                            {/* Edytuj */}
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => handleOpenDialog(appointment)}
                               className="hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:scale-110 transition-all"
+                              title="Edytuj spotkanie"
                             >
                               <PencilSimple className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             </Button>
+                            
+                            {/* Usuń */}
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => handleDelete(appointment.id)}
                               className="hover:bg-red-100 dark:hover:bg-red-900/40 hover:scale-110 transition-all"
+                              title="Usuń spotkanie"
                             >
                               <Trash className="w-4 h-4 text-red-600 dark:text-red-400" />
                             </Button>
@@ -760,6 +865,121 @@ export default function Appointments() {
                 placeholder="Dodatkowe informacje o spotkaniu..."
                 rows={4}
               />
+            </div>
+
+            {/* Kategoria */}
+            <div>
+              <Label htmlFor="category">
+                <Tag className="w-4 h-4 inline mr-2" />
+                Kategoria
+              </Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value: any) => {
+                  const color = getCategoryColor(value);
+                  setFormData({ ...formData, category: value, color });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultation">
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      Konsultacja
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="meeting">
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      Spotkanie
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="inspection">
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      Kontrola
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="estimate">
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                      Wycena
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="other">
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+                      Inne
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Powtarzanie */}
+            <div className="space-y-3 p-4 border rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="recurring" className="flex items-center gap-2">
+                  <Repeat className="w-4 h-4" />
+                  Powtarzające się spotkanie
+                </Label>
+                <Switch
+                  id="recurring"
+                  checked={formData.recurring_enabled}
+                  onCheckedChange={(checked) => setFormData({ ...formData, recurring_enabled: checked })}
+                />
+              </div>
+
+              {formData.recurring_enabled && (
+                <div className="space-y-3 mt-3 pt-3 border-t">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="frequency" className="text-sm">Częstotliwość</Label>
+                      <Select 
+                        value={formData.recurring_frequency} 
+                        onValueChange={(value: any) => setFormData({ ...formData, recurring_frequency: value })}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">Codziennie</SelectItem>
+                          <SelectItem value="weekly">Co tydzień</SelectItem>
+                          <SelectItem value="biweekly">Co 2 tygodnie</SelectItem>
+                          <SelectItem value="monthly">Co miesiąc</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="occurrences" className="text-sm">Liczba powtórzeń</Label>
+                      <Input
+                        id="occurrences"
+                        type="number"
+                        min="1"
+                        max="52"
+                        className="h-9"
+                        value={formData.recurring_occurrences}
+                        onChange={(e) => setFormData({ ...formData, recurring_occurrences: parseInt(e.target.value) || 1 })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="end_date" className="text-sm">Lub data zakończenia (opcjonalnie)</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      className="h-9"
+                      value={formData.recurring_end_date}
+                      onChange={(e) => setFormData({ ...formData, recurring_end_date: e.target.value })}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    ℹ️ Zostanie utworzone {formData.recurring_occurrences} spotkań
+                  </p>
+                </div>
+              )}
             </div>
 
             <DialogFooter>

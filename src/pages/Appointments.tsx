@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppointments } from '@/hooks/useElectronDB';
 import { useClients } from '@/hooks/useElectronDB';
@@ -35,6 +35,9 @@ export default function Appointments() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showMap, setShowMap] = useState(false);
+  const [mapCenter, setMapCenter] = useState({ lat: 52.3676, lng: 4.9041 }); // Amsterdam domyślnie
+  const mapRef = useRef<HTMLIFrameElement>(null);
 
   // Funkcja odtwarzania dźwięku powiadomienia
   const playNotificationSound = () => {
@@ -142,6 +145,45 @@ export default function Appointments() {
 
     return () => clearInterval(interval);
   }, [appointments, clients]);
+
+  // Geocodowanie adresu (zamiana adresu na współrzędne)
+  const geocodeAddress = async (address: string) => {
+    if (!address || address.length < 3) return;
+    
+    try {
+      // Używamy Nominatim (darmowy geocoder OpenStreetMap)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+      );
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        setMapCenter({ lat, lng });
+        console.log('📍 Geocoded address:', { address, lat, lng });
+      }
+    } catch (error) {
+      console.error('Błąd geocodowania:', error);
+    }
+  };
+
+  // Odwrotne geocodowanie (zamiana współrzędnych na adres)
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      );
+      const data = await response.json();
+      
+      if (data && data.display_name) {
+        setFormData(prev => ({ ...prev, location: data.display_name }));
+        console.log('📍 Reverse geocoded:', data.display_name);
+      }
+    } catch (error) {
+      console.error('Błąd odwrotnego geocodowania:', error);
+    }
+  };
 
   // Filtrowane i posortowane spotkania
   const filteredAppointments = useMemo(() => {
@@ -802,15 +844,128 @@ export default function Appointments() {
               </Select>
             </div>
 
-            {/* Lokalizacja */}
+            {/* Lokalizacja z mapą */}
             <div>
-              <Label htmlFor="location">Lokalizacja</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="location">Lokalizacja</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowMap(!showMap)}
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-all"
+                >
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {showMap ? 'Ukryj mapę' : 'Pokaż mapę'}
+                </Button>
+              </div>
+              
               <Input
                 id="location"
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="np. Biuro klienta, Online, Kawiarnia XYZ"
+                onChange={(e) => {
+                  setFormData({ ...formData, location: e.target.value });
+                  // Geocoduj adres po zmianie
+                  if (e.target.value.length > 3) {
+                    geocodeAddress(e.target.value);
+                  }
+                }}
+                placeholder="np. Biuro klienta, Online, Kawiarnia XYZ lub kliknij na mapie"
               />
+
+              {/* Wbudowana mapa Google */}
+              {showMap && (
+                <div className="mt-4 space-y-3">
+                  <div className="relative rounded-xl overflow-hidden shadow-lg border-2 border-blue-200 dark:border-blue-700">
+                    <iframe
+                      ref={mapRef}
+                      title="Google Maps - Wybór lokalizacji spotkania"
+                      className="w-full h-[400px] border-0"
+                      frameBorder="0"
+                      src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(
+                        formData.location || 'Amsterdam, Netherlands'
+                      )}&zoom=14&maptype=roadmap`}
+                      allowFullScreen
+                    />
+                    <div className="absolute top-3 left-3 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          {formData.location || 'Wybierz lokalizację'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Przyciski szybkich akcji */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (navigator.geolocation) {
+                          navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                              const lat = position.coords.latitude;
+                              const lng = position.coords.longitude;
+                              setMapCenter({ lat, lng });
+                              reverseGeocode(lat, lng);
+                              toast.success('Lokalizacja ustawiona na Twoją pozycję');
+                            },
+                            () => {
+                              toast.error('Nie można pobrać lokalizacji');
+                            }
+                          );
+                        }
+                      }}
+                      className="hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                    >
+                      <NavigationArrow className="w-4 h-4 mr-2" />
+                      Moja lokalizacja
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const mapsUrl = getGoogleMapsLink(formData.location);
+                        window.open(mapsUrl, '_blank');
+                      }}
+                      disabled={!formData.location}
+                      className="hover:bg-green-50 dark:hover:bg-green-900/20 transition-all"
+                    >
+                      <NavigationArrow className="w-4 h-4 mr-2" />
+                      Otwórz w Google Maps
+                    </Button>
+                  </div>
+
+                  {/* Sugestie popularnych lokalizacji */}
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400 mb-2">Popularne lokalizacje:</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        'Biuro firmy',
+                        'Plac budowy',
+                        'Online - Zoom',
+                        'Online - Teams',
+                        'Telefon'
+                      ].map((loc) => (
+                        <Button
+                          key={loc}
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setFormData({ ...formData, location: loc })}
+                          className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all"
+                        >
+                          {loc}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Przypomnienie */}

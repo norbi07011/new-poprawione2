@@ -36,6 +36,10 @@ export default function InvoiceForm({ onNavigate }: InvoiceFormProps) {
   
   // Temporary counter state - this should ideally be part of the database
   const [counters, setCounters] = useState<InvoiceCounter[]>([]);
+  
+  // Nowy stan dla numeracji
+  const [numberingMode, setNumberingMode] = useState<'auto' | 'manual'>('auto');
+  const [manualInvoiceNumber, setManualInvoiceNumber] = useState('');
 
   const [selectedClientId, setSelectedClientId] = useState('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -61,6 +65,12 @@ export default function InvoiceForm({ onNavigate }: InvoiceFormProps) {
 
   const invoiceBreakdown = useMemo(() => getInvoiceNumberBreakdown(issueDate), [issueDate]);
   const weekNumber = useMemo(() => getISOWeekNumber(issueDate), [issueDate]);
+  
+  // Oblicz następny numer sekwencyjny
+  const nextSeq = useMemo(() => {
+    const key = `${invoiceBreakdown.year}-${invoiceBreakdown.month}`;
+    return (counters.find(c => `${c.year}-${c.month}` === key)?.last_seq || 0) + 1;
+  }, [invoiceBreakdown, counters]);
 
   const dueDate = useMemo(() => addDays(issueDate, paymentTermDays), [issueDate, paymentTermDays]);
 
@@ -141,18 +151,42 @@ export default function InvoiceForm({ onNavigate }: InvoiceFormProps) {
       counterMap.set(`${c.year}-${c.month}`, c.last_seq);
     });
 
-    const { number, year, month, seq } = getNextInvoiceNumber(counterMap, issueDate);
+    // Użyj ręcznego numeru lub wygeneruj automatycznie
+    let invoiceNumber: string;
+    let year: number;
+    let month: number;
+    let seq: number;
 
-    setCounters((prev) => {
-      const existing = (prev || []).find(c => c.year === year && c.month === month);
-      if (existing) {
-        return (prev || []).map(c =>
-          c.year === year && c.month === month ? { ...c, last_seq: seq } : c
-        );
-      } else {
-        return [...(prev || []), { year, month, last_seq: seq }];
+    if (numberingMode === 'manual') {
+      if (!manualInvoiceNumber.trim()) {
+        toast.error('Wprowadź numer faktury');
+        return;
       }
-    });
+      invoiceNumber = manualInvoiceNumber.trim();
+      // Dla ręcznego numeru używamy aktualnej daty
+      const date = new Date(issueDate);
+      year = date.getFullYear();
+      month = date.getMonth() + 1;
+      seq = 0; // Nie inkrementujemy licznika dla ręcznych numerów
+    } else {
+      const result = getNextInvoiceNumber(counterMap, issueDate);
+      invoiceNumber = result.number;
+      year = result.year;
+      month = result.month;
+      seq = result.seq;
+
+      // Aktualizuj licznik tylko dla automatycznych numerów
+      setCounters((prev) => {
+        const existing = (prev || []).find(c => c.year === year && c.month === month);
+        if (existing) {
+          return (prev || []).map(c =>
+            c.year === year && c.month === month ? { ...c, last_seq: seq } : c
+          );
+        } else {
+          return [...(prev || []), { year, month, last_seq: seq }];
+        }
+      });
+    }
 
     const now = new Date().toISOString();
     const invoiceId = `invoice_${Date.now()}`;
@@ -180,8 +214,8 @@ export default function InvoiceForm({ onNavigate }: InvoiceFormProps) {
         };
       });
 
-    const paymentReference = number;
-    const paymentInfo = `${t('invoices.invoice')} ${number} – ${company.name}`;
+    const paymentReference = invoiceNumber;
+    const paymentInfo = `${t('invoices.invoice')} ${invoiceNumber} – ${company.name}`;
     const qrPayload = generateSEPAQRPayload(
       company.bic,
       company.name,
@@ -197,7 +231,7 @@ export default function InvoiceForm({ onNavigate }: InvoiceFormProps) {
 
     const newInvoice: Invoice = {
       id: invoiceId,
-      invoice_number: number,
+      invoice_number: invoiceNumber,
       company_id: company.id,
       client_id: selectedClientId,
       issue_date: issueDate,
@@ -225,7 +259,7 @@ export default function InvoiceForm({ onNavigate }: InvoiceFormProps) {
       
       await createInvoice(newInvoice);
       
-      toast.success(`✅ Invoice ${number} created`, { id: 'save-invoice' });
+      toast.success(`✅ Invoice ${invoiceNumber} created`, { id: 'save-invoice' });
       
       // Navigate immediately without waiting
       onNavigate('invoices');
@@ -243,12 +277,18 @@ export default function InvoiceForm({ onNavigate }: InvoiceFormProps) {
           <div className="flex items-center gap-3 mt-2">
             <Badge variant="outline" className="gap-1">
               <CalendarBlank size={14} />
-              Week {weekNumber}, {invoiceBreakdown.year}
+              Tydzień / Week {weekNumber}, {invoiceBreakdown.year}
             </Badge>
             <Badge variant="outline" className="gap-1">
               <Hash size={14} />
-              Month {invoiceBreakdown.month.toString().padStart(2, '0')}/{invoiceBreakdown.year}
+              Miesiąc / Month {invoiceBreakdown.month.toString().padStart(2, '0')}/{invoiceBreakdown.year}
             </Badge>
+            {numberingMode === 'auto' && (
+              <Badge variant="secondary" className="gap-1">
+                <Hash size={14} />
+                Następny numer / Next: {invoiceBreakdown.year}{invoiceBreakdown.month.toString().padStart(2, '0')}-{nextSeq.toString().padStart(3, '0')}
+              </Badge>
+            )}
           </div>
         </div>
         <Button variant="outline" onClick={() => onNavigate('invoices')}>
@@ -257,6 +297,99 @@ export default function InvoiceForm({ onNavigate }: InvoiceFormProps) {
       </div>
 
       <div className="grid gap-6">
+        {/* Nowa karta: Numeracja faktury */}
+        <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50/50 to-sky-50/50 dark:from-blue-950/50 dark:to-sky-950/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Hash className="w-5 h-5" />
+              Numeracja faktury / Invoice Numbering
+            </CardTitle>
+            <CardDescription>
+              Wybierz tryb numeracji: automatyczny (zalecany) lub ręczny / Choose numbering mode: automatic (recommended) or manual
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="numberingMode">Tryb numeracji / Numbering Mode *</Label>
+                <Select value={numberingMode} onValueChange={(v: 'auto' | 'manual') => setNumberingMode(v)}>
+                  <SelectTrigger id="numberingMode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">
+                      <div className="flex items-center gap-2">
+                        <Hash size={16} />
+                        <div>
+                          <div className="font-medium">Automatyczny / Automatic</div>
+                          <div className="text-xs text-muted-foreground">Format: RRRRMMM-NNN (rok, miesiąc, numer)</div>
+                        </div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="manual">
+                      <div className="flex items-center gap-2">
+                        <Hash size={16} />
+                        <div>
+                          <div className="font-medium">Ręczny / Manual</div>
+                          <div className="text-xs text-muted-foreground">Wprowadź własny numer faktury</div>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {numberingMode === 'auto' ? (
+                <div className="space-y-2">
+                  <Label>Podgląd numeru / Number Preview</Label>
+                  <div className="p-3 rounded-lg border-2 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/50">
+                    <div className="text-2xl font-bold text-blue-700 dark:text-blue-300 font-mono">
+                      {invoiceBreakdown.year}{invoiceBreakdown.month.toString().padStart(2, '0')}-{nextSeq.toString().padStart(3, '0')}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Rok {invoiceBreakdown.year}, Miesiąc {invoiceBreakdown.month.toString().padStart(2, '0')}, Numer {nextSeq.toString().padStart(3, '0')}
+                    </div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
+                      <CalendarBlank size={12} />
+                      Tydzień {weekNumber}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="manualNumber">Numer faktury / Invoice Number *</Label>
+                  <Input
+                    id="manualNumber"
+                    value={manualInvoiceNumber}
+                    onChange={(e) => setManualInvoiceNumber(e.target.value)}
+                    placeholder="np. FAK/2024/001, INV-2024-W47-001, etc."
+                    className="font-mono text-lg"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Możesz użyć dowolnego formatu, np. FAK/2024/001 lub INV-W{weekNumber}-001
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Informacje pomocnicze */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                <div className="text-xs text-muted-foreground mb-1">Rok / Year</div>
+                <div className="text-lg font-semibold">{invoiceBreakdown.year}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                <div className="text-xs text-muted-foreground mb-1">Miesiąc / Month</div>
+                <div className="text-lg font-semibold">{invoiceBreakdown.month.toString().padStart(2, '0')}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                <div className="text-xs text-muted-foreground mb-1">Tydzień / Week</div>
+                <div className="text-lg font-semibold">{weekNumber}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Factuurgegevens / Invoice Details</CardTitle>

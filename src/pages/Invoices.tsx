@@ -12,7 +12,7 @@ import { Plus, FileText, DownloadSimple, CheckCircle, FilePdf, FileCsv, FileCode
 import { Invoice, Client, Company } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/invoice-utils';
 import { toast } from 'sonner';
-import { generateInvoicePDF } from '@/lib/pdf-generator';
+import { generateInvoicePDF, generateMobilePDF } from '@/lib/pdf-generator';
 import { exportToCSV, exportToJSON, exportToExcel, exportToXML } from '@/lib/export-utils';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -54,12 +54,25 @@ export default function Invoices({ onNavigate }: InvoicesProps) {
     }
 
     try {
-      await generateInvoicePDF(invoice, company, client, invoice.lines, i18n.language, selectedTemplateId || 'classic');
-      toast.success(t('invoices.pdfOpened'), {
-        duration: 6000,
-      });
+      // Wykryj czy to urządzenie mobilne
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobileDevice) {
+        // Na telefonie użyj html2canvas + jsPDF
+        toast.loading('📱 Generowanie PDF dla telefonu...', { duration: 2000 });
+        await generateMobilePDF(invoice, company, client, invoice.lines, i18n.language, selectedTemplateId || 'classic');
+        toast.success('✅ PDF zapisany! Sprawdź folder Pobrane', {
+          duration: 6000,
+        });
+      } else {
+        // Na desktopie użyj window.print()
+        await generateInvoicePDF(invoice, company, client, invoice.lines, i18n.language, selectedTemplateId || 'classic');
+        toast.success(t('invoices.pdfOpened'), {
+          duration: 6000,
+        });
+      }
     } catch (error) {
-      toast.error(t('invoices.pdfError'));
+      toast.error('❌ Błąd generowania PDF. Spróbuj ponownie.');
       console.error(error);
     }
   };

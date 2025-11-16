@@ -1,6 +1,26 @@
 # 📦 Instrukcja uruchomienia aplikacji MESSU BOUW
 
-## 🚀 Szybki start (uruchomienie aplikacji)
+## ⚡ NAJSZYBSZA INSTALACJA (automatyczna)
+
+### Windows PowerShell:
+```powershell
+git clone https://github.com/norbi07011/messu-bouw-new-.git
+cd messu-bouw-new-
+.\setup.ps1
+```
+
+### Windows CMD:
+```cmd
+git clone https://github.com/norbi07011/messu-bouw-new-.git
+cd messu-bouw-new-
+setup.bat
+```
+
+✅ Skrypt automatycznie zainstaluje wszystko i uruchomi aplikację!
+
+---
+
+## 🚀 Instalacja manualna (krok po kroku)
 
 ### 1. Pobierz kod z GitHub
 ```powershell

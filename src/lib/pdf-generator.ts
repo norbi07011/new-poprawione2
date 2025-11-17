@@ -52,7 +52,11 @@ export async function generateInvoicePDF(
 
     let logoDataUrl = '';
     if (template.config.showLogo && company.logo_url) {
-      logoDataUrl = await imageUrlToBase64(company.logo_url);
+      try {
+        logoDataUrl = await imageUrlToBase64(company.logo_url);
+      } catch (err) {
+        console.warn('⚠️ Nie udało się załadować logo, kontynuuję bez logo:', err);
+      }
     }
 
     const weekNumber = getISOWeekNumber(invoice.issue_date).toString();
@@ -160,7 +164,11 @@ export async function generateMobilePDF(
 
     let logoDataUrl = '';
     if (template.config.showLogo && company.logo_url) {
-      logoDataUrl = await imageUrlToBase64(company.logo_url);
+      try {
+        logoDataUrl = await imageUrlToBase64(company.logo_url);
+      } catch (err) {
+        console.warn('⚠️ Nie udało się załadować logo, kontynuuję bez logo:', err);
+      }
     }
 
     const weekNumber = getISOWeekNumber(invoice.issue_date).toString();

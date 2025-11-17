@@ -69,8 +69,14 @@ export default function Invoices({ onNavigate }: InvoicesProps) {
 
   const handleGeneratePDF = async (invoice: Invoice) => {
     const client = clients?.find(c => c.id === invoice.client_id);
-    if (!client || !company) {
-      toast.error(t('invoices.missingData'));
+    
+    if (!client) {
+      toast.error('❌ Brak danych klienta. Najpierw dodaj klienta do faktury.');
+      return;
+    }
+    
+    if (!company) {
+      toast.error('❌ Brak danych firmy. Przejdź do Ustawień i uzupełnij dane swojej firmy.');
       return;
     }
 
@@ -92,9 +98,10 @@ export default function Invoices({ onNavigate }: InvoicesProps) {
           duration: 6000,
         });
       }
-    } catch (error) {
-      toast.error('❌ Błąd generowania PDF. Spróbuj ponownie.');
-      console.error(error);
+    } catch (error: any) {
+      const errorMsg = error?.message || 'Nieznany błąd';
+      toast.error(`❌ Błąd generowania PDF: ${errorMsg}`);
+      console.error('PDF Generation Error:', error);
     }
   };
 

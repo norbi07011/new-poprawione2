@@ -28,8 +28,9 @@ import {
 export default function Appointments() {
   const { t } = useTranslation();
   const { appointments, createAppointment, updateAppointment, deleteAppointment, loading } = useAppointments();
-  const { clients } = useClients();
+  const { clients, createClient } = useClients();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -38,6 +39,20 @@ export default function Appointments() {
   const [showMap, setShowMap] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 52.3676, lng: 4.9041 }); // Amsterdam domyślnie
   const mapRef = useRef<HTMLIFrameElement>(null);
+
+  // Stan formularza nowego klienta
+  const [newClientData, setNewClientData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    country: 'NL',
+    client_type: 'company' as 'individual' | 'company',
+    vat_number: '',
+    kvk_number: '',
+    nip_number: '',
+    notes: '',
+  });
 
   // Funkcja odtwarzania dźwięku powiadomienia
   const playNotificationSound = () => {
@@ -263,6 +278,39 @@ export default function Appointments() {
     console.log('🚪 Opening dialog...');
     setIsDialogOpen(true);
     console.log('🚪 Dialog should be open now');
+  };
+
+  const handleSaveNewClient = async () => {
+    if (!newClientData.name) {
+      toast.error('Nazwa klienta jest wymagana');
+      return;
+    }
+
+    try {
+      const newClient = await createClient(newClientData);
+      toast.success('✅ Klient dodany');
+      
+      // Wybierz nowo dodanego klienta w formularzu spotkania
+      setFormData({ ...formData, client_id: newClient.id });
+      
+      // Resetuj formularz klienta i zamknij dialog
+      setNewClientData({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        country: 'NL',
+        client_type: 'company',
+        vat_number: '',
+        kvk_number: '',
+        nip_number: '',
+        notes: '',
+      });
+      setIsClientDialogOpen(false);
+    } catch (error) {
+      toast.error('Błąd dodawania klienta');
+      console.error(error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -779,7 +827,19 @@ export default function Appointments() {
 
             {/* Klient */}
             <div>
-              <Label htmlFor="client_id">Klient (opcjonalnie)</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="client_id">Klient (opcjonalnie)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsClientDialogOpen(true)}
+                  className="gap-2"
+                >
+                  <Plus size={16} />
+                  Dodaj klienta
+                </Button>
+              </div>
               <Select 
                 value={formData.client_id || 'none'} 
                 onValueChange={(value) => setFormData({ ...formData, client_id: value === 'none' ? '' : value })}
@@ -1147,6 +1207,103 @@ export default function Appointments() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog do dodawania nowego klienta */}
+      <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Dodaj nowego klienta</DialogTitle>
+            <DialogDescription>
+              Uzupełnij dane nowego klienta. Po zapisaniu zostanie automatycznie wybrany w spotkaniu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="new_client_name">
+                Nazwa <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="new_client_name"
+                value={newClientData.name}
+                onChange={(e) => setNewClientData({ ...newClientData, name: e.target.value })}
+                placeholder="Nazwa klienta lub firmy"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="new_client_email">Email</Label>
+              <Input
+                id="new_client_email"
+                type="email"
+                value={newClientData.email}
+                onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })}
+                placeholder="email@example.com"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="new_client_phone">Telefon</Label>
+              <Input
+                id="new_client_phone"
+                value={newClientData.phone}
+                onChange={(e) => setNewClientData({ ...newClientData, phone: e.target.value })}
+                placeholder="+31 6 12345678"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="new_client_address">Adres</Label>
+              <Textarea
+                id="new_client_address"
+                value={newClientData.address}
+                onChange={(e) => setNewClientData({ ...newClientData, address: e.target.value })}
+                placeholder="Ulica, miasto, kod pocztowy"
+                rows={2}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="new_client_country">Kraj</Label>
+              <Select
+                value={newClientData.country}
+                onValueChange={(value) => setNewClientData({ ...newClientData, country: value })}
+              >
+                <SelectTrigger id="new_client_country">
+                  <SelectValue placeholder="Wybierz kraj" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NL">Holandia</SelectItem>
+                  <SelectItem value="PL">Polska</SelectItem>
+                  <SelectItem value="DE">Niemcy</SelectItem>
+                  <SelectItem value="BE">Belgia</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="new_client_type">Typ klienta</Label>
+              <Select
+                value={newClientData.client_type}
+                onValueChange={(value: 'individual' | 'company') => 
+                  setNewClientData({ ...newClientData, client_type: value })
+                }
+              >
+                <SelectTrigger id="new_client_type">
+                  <SelectValue placeholder="Wybierz typ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="individual">Osoba prywatna</SelectItem>
+                  <SelectItem value="company">Firma</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsClientDialogOpen(false)}>
+              Anuluj
+            </Button>
+            <Button type="button" onClick={handleSaveNewClient}>
+              <Check className="w-4 h-4 mr-2" />
+              Zapisz klienta
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

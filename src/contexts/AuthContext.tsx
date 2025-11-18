@@ -1,20 +1,19 @@
 /**
  * 🔐 Authentication Context
- * Zarządza stanem logowania użytkownika
+ * Zarządza stanem logowania użytkownika - SUPABASE AUTH
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  User,
-  GoogleAuthProvider,
-  signInWithPopup
-} from 'firebase/auth';
-import { auth, DEMO_MODE } from '@/config/firebase';
+import { supabase } from '@/config/supabase';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+
+// Kompatybilność z Firebase User
+interface User {
+  uid: string;
+  email: string | null;
+  displayName?: string | null;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -28,130 +27,85 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Konwersja Supabase User na format kompatybilny z Firebase
+const convertUser = (supabaseUser: SupabaseUser | null): User | null => {
+  if (!supabaseUser) return null;
+  return {
+    uid: supabaseUser.id,
+    email: supabaseUser.email || null,
+    displayName: supabaseUser.user_metadata?.display_name || supabaseUser.email?.split('@')[0] || null
+  };
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (DEMO_MODE) {
-      // DEMO MODE - symuluj zalogowanego użytkownika
-      const demoUser = {
-        uid: 'demo-user-123',
-        email: 'demo@messubouw.com',
-        displayName: 'Demo User'
-      } as User;
-      
-      // Sprawdź czy w localStorage jest "zalogowany"
-      const isLoggedIn = localStorage.getItem('demo_logged_in') === 'true';
-      if (isLoggedIn) {
-        setUser(demoUser);
-      }
-      setLoading(false);
-      return;
-    }
-
-    // PRODUCTION MODE - Firebase Auth
-    if (!auth) {
-      setLoading(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    // Sprawdź aktualną sesję
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(convertUser(session?.user || null));
       setLoading(false);
     });
 
-    return unsubscribe;
+    // Nasłuchuj zmian sesji
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(convertUser(session?.user || null));
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    if (DEMO_MODE) {
-      // DEMO MODE - zawsze zaloguj
-      localStorage.setItem('demo_logged_in', 'true');
-      const demoUser = {
-        uid: 'demo-user-123',
-        email: email,
-        displayName: email.split('@')[0]
-      } as User;
-      setUser(demoUser);
-      toast.success('Zalogowano (tryb demo)');
-      return;
-    }
-
-    if (!auth) throw new Error('Firebase not initialized');
-    
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
       toast.success('Zalogowano pomyślnie!');
     } catch (error: any) {
       console.error('Sign in error:', error);
-      throw new Error(getErrorMessage(error.code));
+      throw new Error(getErrorMessage(error.message));
     }
   };
 
   const signUp = async (email: string, password: string) => {
-    if (DEMO_MODE) {
-      // DEMO MODE - utwórz i zaloguj
-      localStorage.setItem('demo_logged_in', 'true');
-      const demoUser = {
-        uid: 'demo-user-' + Date.now(),
-        email: email,
-        displayName: email.split('@')[0]
-      } as User;
-      setUser(demoUser);
-      toast.success('Konto utworzone (tryb demo)');
-      return;
-    }
-
-    if (!auth) throw new Error('Firebase not initialized');
-    
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      toast.success('Konto utworzone pomyślnie!');
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      toast.success('Konto utworzone! Sprawdź email aby potwierdzić.');
     } catch (error: any) {
       console.error('Sign up error:', error);
-      throw new Error(getErrorMessage(error.code));
+      throw new Error(getErrorMessage(error.message));
     }
   };
 
   const signInWithGoogle = async () => {
-    if (DEMO_MODE) {
-      // DEMO MODE - symuluj Google login
-      localStorage.setItem('demo_logged_in', 'true');
-      const demoUser = {
-        uid: 'demo-google-123',
-        email: 'demo.google@messubouw.com',
-        displayName: 'Demo Google User'
-      } as User;
-      setUser(demoUser);
-      toast.success('Zalogowano przez Google (tryb demo)');
-      return;
-    }
-
-    if (!auth) throw new Error('Firebase not initialized');
-    
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast.success('Zalogowano przez Google!');
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      
+      if (error) throw error;
     } catch (error: any) {
       console.error('Google sign in error:', error);
-      throw new Error(getErrorMessage(error.code));
+      throw new Error(getErrorMessage(error.message));
     }
   };
 
   const signOut = async () => {
-    if (DEMO_MODE) {
-      localStorage.removeItem('demo_logged_in');
-      setUser(null);
-      toast.success('Wylogowano (tryb demo)');
-      return;
-    }
-
-    if (!auth) return;
-    
     try {
-      await firebaseSignOut(auth);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       toast.success('Wylogowano pomyślnie');
     } catch (error) {
       console.error('Sign out error:', error);
@@ -180,26 +134,13 @@ export function useAuth() {
   return context;
 }
 
-// Helper: Tłumaczenie błędów Firebase
-function getErrorMessage(code: string): string {
-  switch (code) {
-    case 'auth/email-already-in-use':
-      return 'Ten email jest już zajęty';
-    case 'auth/invalid-email':
-      return 'Nieprawidłowy adres email';
-    case 'auth/operation-not-allowed':
-      return 'Operacja niedozwolona';
-    case 'auth/weak-password':
-      return 'Hasło jest zbyt słabe (min. 6 znaków)';
-    case 'auth/user-disabled':
-      return 'To konto zostało zablokowane';
-    case 'auth/user-not-found':
-      return 'Nie znaleziono użytkownika';
-    case 'auth/wrong-password':
-      return 'Nieprawidłowe hasło';
-    case 'auth/too-many-requests':
-      return 'Zbyt wiele prób. Spróbuj później';
-    default:
-      return 'Wystąpił błąd. Spróbuj ponownie';
-  }
+// Helper: Tłumaczenie błędów Supabase
+function getErrorMessage(message: string): string {
+  if (message.includes('Invalid login credentials')) return 'Nieprawidłowy email lub hasło';
+  if (message.includes('Email not confirmed')) return 'Potwierdź swój email';
+  if (message.includes('User already registered')) return 'Ten email jest już zajęty';
+  if (message.includes('Password should be at least 6 characters')) return 'Hasło musi mieć min. 6 znaków';
+  if (message.includes('Invalid email')) return 'Nieprawidłowy adres email';
+  if (message.includes('too many requests')) return 'Zbyt wiele prób. Spróbuj później';
+  return message || 'Wystąpił błąd. Spróbuj ponownie';
 }

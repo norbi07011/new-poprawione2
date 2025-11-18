@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '@/contexts/AuthContext';
-import { FirestoreService } from '@/services/FirestoreService';
-import { DEMO_MODE } from '@/config/firebase';
+import { SupabaseService } from '@/services/SupabaseService';
 
 // Sprawdź czy działamy w Electron
 const isElectron = () => {
@@ -192,15 +191,15 @@ export function useInvoices() {
         isElectron: isElectron(), 
         isMobile: isMobile(), 
         hasUser: !!user,
-        demoMode: DEMO_MODE 
+        demoMode: false /* removed */ 
       });
       
-      // FIREBASE MODE - używaj Firestore gdy jest użytkownik i nie jest DEMO_MODE
-      if (!DEMO_MODE && user?.uid) {
-        console.log('☁️ Fetching from Firestore for user:', user.uid);
-        const result = await FirestoreService.getInvoices(user.uid);
+      // SUPABASE MODE - używaj Supabase gdy jest użytkownik i nie jest false
+      if ( user?.uid) {
+        console.log('☁️ Fetching from Supabase for user:', user.uid);
+        const result = await SupabaseService.getInvoices(user.uid);
         setInvoices(result || []);
-        console.log('✅ Loaded from Firestore:', result?.length || 0, 'invoices');
+        console.log('✅ Loaded from Supabase:', result?.length || 0, 'invoices');
         return;
       }
       
@@ -233,14 +232,15 @@ export function useInvoices() {
 
   const createInvoice = useCallback(async (invoice: any) => {
     try {
-      console.log('💾 createInvoice called:', { invoice, hasUser: !!user, demoMode: DEMO_MODE });
+      console.log('💾 createInvoice called:', { invoice, hasUser: !!user, demoMode: false /* removed */ });
       
-      // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
-        console.log('☁️ Saving to Firestore for user:', user.uid);
+      // SUPABASE MODE
+      if ( user?.uid) {
+        console.log('☁️ Saving to Supabase for user:', user.uid);
         const { id, ...invoiceData } = invoice;
-        const newId = await FirestoreService.createInvoice(user.uid, invoiceData);
-        console.log('✅ Invoice saved to Firestore:', invoice.invoice_number);
+        const newInvoice = await SupabaseService.createInvoice(user.uid, invoiceData);
+        const newId = newInvoice?.id || id;
+        console.log('✅ Invoice saved to Supabase:', invoice.invoice_number);
         fetchInvoices();
         return { ...invoiceData, id: newId };
       }
@@ -288,9 +288,9 @@ export function useInvoices() {
   const updateInvoice = useCallback(async (id: string, invoice: any) => {
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
+      if ( user?.uid) {
         console.log('☁️ Updating invoice in Firestore:', id);
-        await FirestoreService.updateInvoice(user.uid, id, invoice);
+        await SupabaseService.updateInvoice(user.uid, id, invoice);
         await fetchInvoices();
         return invoice;
       }
@@ -324,9 +324,9 @@ export function useInvoices() {
   const deleteInvoice = useCallback(async (id: string) => {
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
+      if ( user?.uid) {
         console.log('☁️ Deleting invoice from Firestore:', id);
-        await FirestoreService.deleteInvoice(user.uid, id);
+        await SupabaseService.deleteInvoice(user.uid, id);
         await fetchInvoices();
         return true;
       }
@@ -381,8 +381,8 @@ export function useClients() {
     setLoading(true);
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
-        const result = await FirestoreService.getClients(user.uid);
+      if ( user?.uid) {
+        const result = await SupabaseService.getClients(user.uid);
         setClients(result || []);
       } else if (isElectron() && window.electronAPI) {
         const result = await window.electronAPI.database.getClients();
@@ -402,9 +402,9 @@ export function useClients() {
   const createClient = useCallback(async (client: any) => {
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
+      if ( user?.uid) {
         const { id, ...clientData } = client;
-        const newId = await FirestoreService.createClient(user.uid, clientData);
+        const newId = await SupabaseService.createClient(user.uid, clientData);
         await fetchClients();
         return { ...clientData, id: newId };
       } else if (isElectron() && window.electronAPI) {
@@ -429,8 +429,8 @@ export function useClients() {
   const updateClient = useCallback(async (id: string, client: any) => {
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
-        await FirestoreService.updateClient(user.uid, id, client);
+      if ( user?.uid) {
+        await SupabaseService.updateClient(user.uid, id, client);
         await fetchClients();
         return client;
       } else if (isElectron() && window.electronAPI) {
@@ -454,8 +454,8 @@ export function useClients() {
   const deleteClient = useCallback(async (id: string) => {
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
-        await FirestoreService.deleteClient(user.uid, id);
+      if ( user?.uid) {
+        await SupabaseService.deleteClient(user.uid, id);
         await fetchClients();
         return true;
       } else if (isElectron() && window.electronAPI) {
@@ -500,8 +500,8 @@ export function useProducts() {
     setLoading(true);
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
-        const result = await FirestoreService.getProducts(user.uid);
+      if ( user?.uid) {
+        const result = await SupabaseService.getProducts(user.uid);
         setProducts(result || []);
       } else if (isElectron() && window.electronAPI) {
         const result = await window.electronAPI.database.getProducts();
@@ -521,9 +521,9 @@ export function useProducts() {
   const createProduct = useCallback(async (product: any) => {
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
+      if ( user?.uid) {
         const { id, ...productData } = product;
-        const newId = await FirestoreService.createProduct(user.uid, productData);
+        const newId = await SupabaseService.createProduct(user.uid, productData);
         await fetchProducts();
         return { ...productData, id: newId };
       } else if (isElectron() && window.electronAPI) {
@@ -548,8 +548,8 @@ export function useProducts() {
   const updateProduct = useCallback(async (id: string, product: any) => {
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
-        await FirestoreService.updateProduct(user.uid, id, product);
+      if ( user?.uid) {
+        await SupabaseService.updateProduct(user.uid, id, product);
         await fetchProducts();
         return product;
       } else if (isElectron() && window.electronAPI) {
@@ -573,8 +573,8 @@ export function useProducts() {
   const deleteProduct = useCallback(async (id: string) => {
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
-        await FirestoreService.deleteProduct(user.uid, id);
+      if ( user?.uid) {
+        await SupabaseService.deleteProduct(user.uid, id);
         await fetchProducts();
         return true;
       } else if (isElectron() && window.electronAPI) {
@@ -619,8 +619,8 @@ export function useCompany() {
     setLoading(true);
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
-        const result = await FirestoreService.getCompany(user.uid);
+      if ( user?.uid) {
+        const result = await SupabaseService.getCompany(user.uid);
         setCompany(result);
       } else if (isElectron() && window.electronAPI) {
         const result = await window.electronAPI.database.getCompany();
@@ -640,8 +640,8 @@ export function useCompany() {
   const updateCompany = useCallback(async (companyData: any) => {
     try {
       // FIREBASE MODE
-      if (!DEMO_MODE && user?.uid) {
-        await FirestoreService.updateCompany(user.uid, companyData);
+      if ( user?.uid) {
+        await SupabaseService.updateCompany(user.uid, companyData);
         setCompany({ ...company, ...companyData });
         return companyData;
       } else if (isElectron() && window.electronAPI) {
@@ -682,8 +682,8 @@ export function useCompanies() {
     setLoading(true);
     try {
       // FIREBASE MODE - pobierz firmę z Firestore jako pojedynczy dokument
-      if (!DEMO_MODE && user?.uid) {
-        const company = await FirestoreService.getCompany(user.uid);
+      if ( user?.uid) {
+        const company = await SupabaseService.getCompany(user.uid);
         const companiesList = company ? [company] : [];
         setCompanies(companiesList);
         if (companiesList.length > 0) {
@@ -1416,3 +1416,6 @@ function convertToCSV(data: any[]): string {
   
   return '\uFEFF' + csvRows.join('\n'); // BOM dla polskich znaków
 }
+
+
+

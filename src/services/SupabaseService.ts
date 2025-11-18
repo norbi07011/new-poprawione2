@@ -52,6 +52,11 @@ export class SupabaseService {
     }
   }
   
+  // Alias dla kompatybilności z Firebase
+  static async updateCompany(userId: string, company: Partial<Company>): Promise<Company | null> {
+    return this.saveCompany(userId, company);
+  }
+  
   // ============================================
   // INVOICE OPERATIONS
   // ============================================
@@ -78,13 +83,16 @@ export class SupabaseService {
     if (!isSupabaseConfigured()) return null;
     
     try {
+      // Generuj UUID dla nowego invoice
+      const invoiceWithId = {
+        ...invoice,
+        user_id: userId,
+        created_at: new Date().toISOString()
+      };
+      
       const { data, error } = await supabase
         .from('invoices')
-        .insert({
-          user_id: userId,
-          ...invoice,
-          created_at: new Date().toISOString()
-        })
+        .insert(invoiceWithId)
         .select()
         .single();
       
@@ -163,13 +171,15 @@ export class SupabaseService {
     if (!isSupabaseConfigured()) return null;
     
     try {
+      const clientWithId = {
+        ...client,
+        user_id: userId,
+        created_at: new Date().toISOString()
+      };
+      
       const { data, error } = await supabase
         .from('clients')
-        .insert({
-          user_id: userId,
-          ...client,
-          created_at: new Date().toISOString()
-        })
+        .insert(clientWithId)
         .select()
         .single();
       
@@ -248,13 +258,15 @@ export class SupabaseService {
     if (!isSupabaseConfigured()) return null;
     
     try {
+      const productWithId = {
+        ...product,
+        user_id: userId,
+        created_at: new Date().toISOString()
+      };
+      
       const { data, error } = await supabase
         .from('products')
-        .insert({
-          user_id: userId,
-          ...product,
-          created_at: new Date().toISOString()
-        })
+        .insert(productWithId)
         .select()
         .single();
       

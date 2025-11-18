@@ -26,4 +26,8 @@ export default defineConfig({
   server: {
     host: true, // Umożliwia dostęp z innych urządzeń w sieci
   },
+  optimizeDeps: {
+    exclude: ['@supabase/supabase-js'],
+    force: true
+  }
 });

@@ -183,29 +183,6 @@ export default function Register() {
             </button>
           </form>
 
-          {/* Separator */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                lub kontynuuj z
-              </span>
-            </div>
-          </div>
-
-          {/* Google Sign-In */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-semibold py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <GoogleLogo size={20} weight="bold" />
-            Google
-          </button>
-
           {/* Login Link */}
           <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
             Masz już konto?{' '}

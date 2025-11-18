@@ -367,10 +367,11 @@ export default function Settings() {
         </div>
       </div>
 
-      <Tabs defaultValue="company" className="w-full">
+      <Tabs defaultValue="companies" className="w-full">
         <TabsList>
           <TabsTrigger value="account">👤 Konto</TabsTrigger>
           {/* <TabsTrigger value="license">🔐 Licencja</TabsTrigger> */}
+          <TabsTrigger value="companies">{t('settings.companies.title')}</TabsTrigger>
           <TabsTrigger value="company">{t('settings.tabs.company')}</TabsTrigger>
           <TabsTrigger value="preferences">{t('settings.tabs.preferences')}</TabsTrigger>
           <TabsTrigger value="backup">💾 Backup & Restore</TabsTrigger>
@@ -401,25 +402,24 @@ export default function Settings() {
 
         {/* HIDDEN: License tab removed from user interface */}
 
-        <TabsContent value="company">
-          <div className="space-y-6">
-            {/* Lista firm i zarządzanie wieloma firmami */}
-            <Card>
-              <CardHeader>
-                <CardTitle>🏢 {t('settings.companies.title')}</CardTitle>
-                <CardDescription>{t('settings.companies.description')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CompanyManager />
-              </CardContent>
-            </Card>
+        <TabsContent value="companies">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('settings.companies.title')}</CardTitle>
+              <CardDescription>{t('settings.companies.description')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CompanyManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* Formularz edycji aktualnej firmy */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('settings.company')}</CardTitle>
-                <CardDescription>{t('settings.companyDescription')}</CardDescription>
-              </CardHeader>
+        <TabsContent value="company">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('settings.company')}</CardTitle>
+              <CardDescription>{t('settings.companyDescription')}</CardDescription>
+            </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
                 <div className="flex items-start gap-6">
@@ -635,7 +635,6 @@ export default function Settings() {
               </Button>
             </CardContent>
           </Card>
-          </div>
         </TabsContent>
 
         <TabsContent value="preferences">

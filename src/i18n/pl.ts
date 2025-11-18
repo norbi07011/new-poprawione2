@@ -257,6 +257,9 @@ export default {
       companyDescription: 'Informacje o firmie',
       preferences: 'Preferencje',
       preferencesDescription: 'Preferencje aplikacji i ustawienia domyślne',
+      noCompanyWarning: 'Najpierw dodaj dane firmy',
+      noCompanyMessage: 'Wypełnij najpierw dane swojej firmy przed utworzeniem faktur',
+      goToSettings: 'Przejdź do Ustawień',
       companies: {
         title: 'Zarządzanie firmami',
         description: 'Dodaj i zarządzaj wieloma firmami',

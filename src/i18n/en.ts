@@ -256,6 +256,9 @@ export default {
       companyDescription: 'Company information',
       preferences: 'Preferences',
       preferencesDescription: 'Application preferences and defaults',
+      noCompanyWarning: 'Add company information first',
+      noCompanyMessage: 'Please fill in your company information before creating invoices',
+      goToSettings: 'Go to Settings',
       companies: {
         title: 'Company Management',
         description: 'Add and manage multiple companies',

@@ -256,6 +256,9 @@ export default {
       companyDescription: 'Bedrijfsinformatie',
       preferences: 'Voorkeuren',
       preferencesDescription: 'Applicatievoorkeuren en standaardinstellingen',
+      noCompanyWarning: 'Eerst bedrijfsgegevens toevoegen',
+      noCompanyMessage: 'Vul eerst uw bedrijfsgegevens in voordat u facturen aanmaakt',
+      goToSettings: 'Ga naar Instellingen',
       companies: {
         title: 'Bedrijfsbeheer',
         description: 'Meerdere bedrijven toevoegen en beheren',

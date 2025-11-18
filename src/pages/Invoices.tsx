@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Plus, FileText, DownloadSimple, CheckCircle, FilePdf, FileCsv, FileCode, FileXls, Trash, PencilSimple, Eye, EnvelopeSimple, DotsThree, WhatsappLogo, ArrowLeft, ArrowRight, Crown } from '@phosphor-icons/react';
+import { Plus, FileText, DownloadSimple, CheckCircle, FilePdf, FileCsv, FileCode, FileXls, Trash, PencilSimple, Eye, EnvelopeSimple, DotsThree, WhatsappLogo, ArrowLeft, ArrowRight, Crown, Buildings } from '@phosphor-icons/react';
 import { Invoice, Client, Company } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/invoice-utils';
 import { toast } from 'sonner';
@@ -38,6 +38,18 @@ export default function Invoices({ onNavigate }: InvoicesProps) {
   const currentPlan = LicenseManager.getCurrentPlan();
 
   const handleCreateInvoice = () => {
+    // Sprawdź czy są dane firmy
+    if (!company) {
+      toast.error(t('settings.noCompanyMessage'), {
+        duration: 5000,
+        action: {
+          label: t('settings.goToSettings'),
+          onClick: () => onNavigate('settings')
+        }
+      });
+      return;
+    }
+
     // Sprawdź limit faktur
     const check = LicenseManager.canCreateInvoice(invoices?.length || 0);
     
@@ -361,6 +373,31 @@ ${company?.name || ''}`;
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* OSTRZEŻENIE: Brak danych firmy */}
+        {!company && !companyLoading && (
+          <div className="bg-linear-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-amber-100 rounded-xl">
+                <Buildings className="text-amber-600" size={32} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-amber-900 mb-2">
+                  ⚠️ {t('settings.noCompanyWarning')}
+                </h3>
+                <p className="text-amber-800 mb-4">
+                  {t('settings.noCompanyMessage')}
+                </p>
+                <button
+                  onClick={() => onNavigate('settings')}
+                  className="px-6 py-3 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                  {t('settings.goToSettings')} →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* UKŁAD: Film po lewej + Tekst z przyciskiem po prawej */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* LEWA STRONA: Film */}

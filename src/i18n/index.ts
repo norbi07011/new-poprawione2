@@ -4,16 +4,22 @@ import pl from './pl';
 import nl from './nl';
 import en from './en';
 
+// Ustaw domyślny język na holenderski (NL) jeśli użytkownik nie ma zapisanego
+const savedLanguage = localStorage.getItem('language');
+if (!savedLanguage || savedLanguage === 'pl') {
+  localStorage.setItem('language', 'nl');
+}
+
 i18n
   .use(initReactI18next)
   .init({
     resources: {
-      pl,
       nl,
       en,
+      pl,
     },
-    lng: localStorage.getItem('language') || 'pl',
-    fallbackLng: 'pl',
+    lng: localStorage.getItem('language') || 'nl',
+    fallbackLng: 'nl',
     interpolation: {
       escapeValue: false,
     },

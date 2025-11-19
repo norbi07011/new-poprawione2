@@ -52,7 +52,7 @@ export default function Companies() {
       await refetch();
     } catch (error: any) {
       console.error('Error saving company:', error);
-      toast.error('Błąd: ' + error.message);
+      toast.error(t('common.error') + ': ' + error.message);
     }
   };
 
@@ -70,7 +70,7 @@ export default function Companies() {
         await refetch();
       } catch (error: any) {
         console.error('Error deleting company:', error);
-        toast.error('Błąd: ' + error.message);
+        toast.error(t('common.error') + ': ' + error.message);
       }
     }
   };

@@ -126,7 +126,7 @@ export default function InvoiceForm({ onNavigate, editInvoiceId }: InvoiceFormPr
       } else {
         console.error('❌ Nie znaleziono faktury o ID:', editInvoiceId);
         console.log('Dostępne faktury:', invoices.map(inv => ({ id: inv.id, number: inv.invoice_number })));
-        toast.error('Nie znaleziono faktury');
+        toast.error(t('invoices.notFound'));
         onNavigate('invoices');
       }
     }

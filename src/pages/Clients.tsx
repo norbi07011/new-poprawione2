@@ -18,18 +18,18 @@ import { searchByKvkNumber, searchByName, generateVATFromKVK, type KVKSearchResu
 
 // Słownik krajów
 const COUNTRIES = {
-  'PL': 'Polska',
-  'NL': 'Holandia',
-  'DE': 'Niemcy',
-  'BE': 'Belgia',
-  'FR': 'Francja',
-  'ES': 'Hiszpania',
-  'IT': 'Włochy',
-  'GB': 'Wielka Brytania',
-  'US': 'Stany Zjednoczone',
-  'CA': 'Kanada',
-  'AU': 'Australia',
-  'Other': 'Inne'
+  'PL': 'Polen',
+  'NL': 'Nederland',
+  'DE': 'Duitsland',
+  'BE': 'België',
+  'FR': 'Frankrijk',
+  'ES': 'Spanje',
+  'IT': 'Italië',
+  'GB': 'Verenigd Koninkrijk',
+  'US': 'Verenigde Staten',
+  'CA': 'Canada',
+  'AU': 'Australië',
+  'Other': 'Overig'
 };
 export default function Clients() {
   const { t } = useTranslation();

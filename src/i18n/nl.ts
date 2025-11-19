@@ -72,6 +72,7 @@ export default {
       emailSent: 'E-mailclient geopend',
       noClientEmail: 'Klant heeft geen e-mailadres',
       allInvoices: 'Alle facturen in het systeem',
+      notFound: 'Factuur niet gevonden',
       invoiceNumberLabel: 'Factuurnummer',
       clientLabel: 'Klant',
       issueDateLabel: 'Factuurdatum',

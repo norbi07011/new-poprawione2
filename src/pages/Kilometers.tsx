@@ -502,8 +502,8 @@ export default function KilometersPage() {
     ` : ''}
     
     <div class="footer">
-      <div>Raport wygenerowany: ${new Date().toLocaleDateString('pl-PL')} ${new Date().toLocaleTimeString('pl-PL')}</div>
-      <div>Łączna liczba wpisów: ${entries.length} | Dane zgodne z przepisami Belastingdienst Holandia</div>
+      <div>Rapport gegenereerd: ${new Date().toLocaleDateString('nl-NL')} ${new Date().toLocaleTimeString('nl-NL')}</div>
+      <div>Totaal aantal inzendingen: ${entries.length} | Gegevens conform Belastingdienst Nederland regelgeving</div>
     </div>
   </div>
 </body>

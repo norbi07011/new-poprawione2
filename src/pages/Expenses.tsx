@@ -901,8 +901,8 @@ export default function Expenses() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Lista wydatków</CardTitle>
-                <CardDescription>Wszystkie wydatki biznesowe</CardDescription>
+                <CardTitle>{t('expenses.expensesList')}</CardTitle>
+                <CardDescription>{t('expenses.allExpenses')}</CardDescription>
               </div>
               <div className="flex gap-3 items-center">
                 <Input
@@ -927,7 +927,7 @@ export default function Expenses() {
                   <Receipt size={64} className="text-sky-600" />
                 </div>
                 <h3 className="text-2xl font-bold text-black mb-3">{t('expenses.noExpenses')}</h3>
-                <p className="text-black mb-6 text-lg">Dodaj pierwszy wydatek, aby zacząć</p>
+                <p className="text-black mb-6 text-lg">{t('expenses.addFirstExpense')}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">

@@ -584,7 +584,7 @@ export default function Appointments() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <Calendar className="w-12 h-12 animate-spin mx-auto mb-4" />
-          <p>Ładowanie spotkań...</p>
+          <p>{t('common.loading')}</p>
         </div>
       </div>
     );

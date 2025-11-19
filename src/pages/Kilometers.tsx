@@ -485,7 +485,7 @@ export default function KilometersPage() {
           }).join('') : `
               <tr>
                 <td colspan="8" style="text-align: center; padding: 20px; color: #666;">
-                  Brak wpisów w tym okresie
+                  {t('kilometers.noEntries')}
                 </td>
               </tr>
           `}
@@ -562,12 +562,12 @@ export default function KilometersPage() {
               {entries.length > 0 && (
                 <button onClick={generateKilometersPDF} className="px-8 py-4 bg-linear-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-3">
                   <Download size={20} />
-                  Pobierz PDF
+                  {t('kilometers.downloadPDF')}
                 </button>
               )}
               <button onClick={() => setShowForm(true)} className="px-10 py-5 bg-linear-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-2xl font-black text-lg shadow-2xl transition-all duration-500 hover:scale-105 flex items-center gap-3">
                 <Plus size={24} weight="bold" />
-                Dodaj wpis
+                {t('kilometers.addEntry')}
               </button>
             </div>
           </div>

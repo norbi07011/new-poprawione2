@@ -439,7 +439,7 @@ export function Timesheets() {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-black">
                     <MapPin size={16} />
-                    <span>{sheet.projectAddress || 'Brak adresu'}</span>
+                    <span>{sheet.projectAddress || t('timesheets.noAddress')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-black">
                     <Clock size={16} />
@@ -482,14 +482,14 @@ export function Timesheets() {
               className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all"
               disabled={isSaving}
             >
-              Anuluj
+              {t('timesheets.cancel')}
             </button>
             <button
               onClick={saveTimesheet}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSaving}
             >
-              {isSaving ? 'Zapisywanie...' : 'Zapisz'}
+              {isSaving ? t('timesheets.saving') : t('timesheets.save')}
             </button>
             <button
               onClick={() => setShowPreview(true)}

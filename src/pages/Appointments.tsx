@@ -317,7 +317,7 @@ export default function Appointments() {
     e.preventDefault();
     
     if (!formData.title || !formData.date || !formData.time) {
-      toast.error('Wypełnij wszystkie wymagane pola');
+      toast.error('Vul alle verplichte velden in');
       return;
     }
 
@@ -600,10 +600,10 @@ export default function Appointments() {
                 <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
                   <Calendar className="w-7 h-7" />
                 </div>
-                Kalendarz Spotkań
+                Afsprakenkalender
               </CardTitle>
               <CardDescription className="text-blue-100 mt-2 text-base">
-                Zarządzaj spotkaniami z klientami i otrzymuj powiadomienia
+                Beheer afspraken met klanten en ontvang meldingen
               </CardDescription>
             </div>
             <div className="flex gap-3">
@@ -617,7 +617,7 @@ export default function Appointments() {
                     : 'text-white hover:bg-white/20'}
                 >
                   <Calendar className="w-4 h-4 mr-2" />
-                  Kalendarz
+                  Kalender
                 </Button>
                 <Button
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -628,7 +628,7 @@ export default function Appointments() {
                     : 'text-white hover:bg-white/20'}
                 >
                   <List className="w-4 h-4 mr-2" />
-                  Lista
+                  Lijst
                 </Button>
               </div>
               <Button 
@@ -636,7 +636,7 @@ export default function Appointments() {
                 className="bg-white text-blue-600 hover:bg-white/90 shadow-lg hover:shadow-xl transition-all hover:scale-105 font-semibold"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Nowe spotkanie
+                Nieuwe afspraak
               </Button>
             </div>
           </div>
@@ -653,7 +653,7 @@ export default function Appointments() {
               <div className="relative">
                 <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
                 <Input
-                  placeholder="Szukaj spotkań..."
+                  placeholder="Zoek afspraken..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-500 rounded-xl shadow-sm hover:shadow-md transition-all"
@@ -665,10 +665,10 @@ export default function Appointments() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="rounded-xl shadow-xl">
-                <SelectItem value="all">Wszystkie</SelectItem>
-                <SelectItem value="scheduled">Zaplanowane</SelectItem>
-                <SelectItem value="completed">Zakończone</SelectItem>
-                <SelectItem value="cancelled">Anulowane</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="scheduled">Gepland</SelectItem>
+                <SelectItem value="completed">Voltooid</SelectItem>
+                <SelectItem value="cancelled">Geannuleerd</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -694,7 +694,7 @@ export default function Appointments() {
                     <TableCell colSpan={8} className="text-center py-12">
                       <div className="flex flex-col items-center gap-3">
                         <Calendar className="w-16 h-16 text-gray-300 dark:text-gray-600" />
-                        <p className="text-gray-500 dark:text-gray-400 font-medium text-lg">Brak spotkań</p>
+                        <p className="text-gray-500 dark:text-gray-400 font-medium text-lg">Geen afspraken</p>
                       </div>
                     </TableCell>
                   </TableRow>

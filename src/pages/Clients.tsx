@@ -291,10 +291,10 @@ export default function Clients() {
           {/* PRAWA STRONA: Tekst i przyciski */}
           <div className="flex flex-col justify-center px-4 md:px-6 lg:px-8">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black text-black mb-3 md:mb-4 tracking-tight">
-              👥 Klienci
+              👥 Klanten
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl text-black mb-6 md:mb-8 font-medium">
-              Zarządzaj bazą danych klientów
+              Beheer klantendatabase
             </p>
             <button onClick={() => handleOpenDialog()}
               className="group relative px-10 py-5 bg-linear-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-2xl font-black text-lg shadow-2xl transition-all duration-500 hover:scale-105 overflow-hidden w-fit"
@@ -302,7 +302,7 @@ export default function Clients() {
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-linear-to-r from-transparent via-white/30 to-transparent"></div>
               <span className="relative flex items-center gap-3">
                 <Plus size={24} weight="bold" />
-                Nowy klient
+                Nieuwe klant
               </span>
             </button>
           </div>
@@ -338,7 +338,7 @@ export default function Clients() {
                 <div className="p-6 bg-blue-100 rounded-3xl inline-block mb-6 animate-pulse">
                   <Users className="text-teal-600" size={64} />
                 </div>
-                <h3 className="text-2xl font-bold text-black mb-3">Ładowanie klientów...</h3>
+                <h3 className="text-2xl font-bold text-black mb-3">Klanten laden...</h3>
               </div>
             ) : filteredClients.length === 0 ? (
               <div className="text-center py-16">

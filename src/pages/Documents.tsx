@@ -45,15 +45,15 @@ export default function Documents() {
 
   // Kategorie dokumentów
   const categories = [
-    { id: 'all', name: 'Wszystkie', icon: '📋', color: 'sky' },
-    { id: 'employment', name: 'Zatrudnienie', icon: '💼', color: 'blue' },
-    { id: 'government', name: 'Rząd/KVK', icon: '🏛️', color: 'indigo' },
-    { id: 'tax', name: 'Podatki', icon: '💰', color: 'green' },
-    { id: 'business', name: 'Biznes', icon: '📧', color: 'cyan' },
-    { id: 'legal', name: 'Prawne', icon: '⚖️', color: 'violet' },
-    { id: 'hr', name: 'HR/Personel', icon: '👥', color: 'rose' },
+    { id: 'all', name: 'Alle', icon: '📋', color: 'sky' },
+    { id: 'employment', name: 'Werkgelegenheid', icon: '💼', color: 'blue' },
+    { id: 'government', name: 'Overheid/KVK', icon: '🏛️', color: 'indigo' },
+    { id: 'tax', name: 'Belastingen', icon: '💰', color: 'green' },
+    { id: 'business', name: 'Zakelijk', icon: '📧', color: 'cyan' },
+    { id: 'legal', name: 'Juridisch', icon: '⚖️', color: 'violet' },
+    { id: 'hr', name: 'HR/Personeel', icon: '👥', color: 'rose' },
     { id: 'marketing', name: 'Marketing', icon: '📢', color: 'amber' },
-    { id: 'reports', name: 'Raporty', icon: '📊', color: 'emerald' },
+    { id: 'reports', name: 'Rapporten', icon: '📊', color: 'emerald' },
   ];
 
   // Załaduj dokumenty
@@ -89,8 +89,8 @@ export default function Documents() {
       ];
       setDocuments(mockDocuments);
     } catch (error) {
-      console.error('Błąd ładowania dokumentów:', error);
-      toast.error('Nie udało się załadować dokumentów');
+      console.error('Fout bij laden documenten:', error);
+      toast.error('Kan documenten niet laden');
     } finally {
       setLoading(false);
     }
@@ -184,7 +184,7 @@ export default function Documents() {
     }
 
     if (!selectedTemplate) {
-      toast.error('Wybierz szablon');
+      toast.error('Selecteer een sjabloon');
       return;
     }
 
@@ -215,8 +215,8 @@ export default function Documents() {
 
       setShowEditor(false);
     } catch (error) {
-      console.error('Błąd zapisu:', error);
-      toast.error('Nie udało się zapisać dokumentu');
+      console.error('Fout bij opslaan:', error);
+      toast.error('Kan document niet opslaan');
     }
   };
 
@@ -228,8 +228,8 @@ export default function Documents() {
       setDocuments(prev => prev.filter(d => d.id !== id));
       toast.success('Dokument usunięty');
     } catch (error) {
-      console.error('Błąd usuwania:', error);
-      toast.error('Nie udało się usunąć dokumentu');
+      console.error('Fout bij verwijderen:', error);
+      toast.error('Kan document niet verwijderen');
     }
   };
 
@@ -252,9 +252,9 @@ export default function Documents() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-sky-600">
-              {editingDocument ? '✏️ Edytuj dokument' : '📝 Nowy dokument'}
+              {editingDocument ? '✏️ Bewerk document' : '📝 Nieuw document'}
             </h1>
-            <p className="text-gray-600 mt-1">Wybierz szablon i uzupełnij treść</p>
+            <p className="text-gray-600 mt-1">Selecteer een sjabloon en vul de inhoud in</p>
           </div>
           <div className="flex gap-2">
             <Button
@@ -271,7 +271,7 @@ export default function Documents() {
               className="gap-2"
             >
               <Eye className="h-4 w-4" />
-              {showPreview ? 'Edytor' : 'Podgląd'}
+              {showPreview ? 'Editor' : 'Voorbeeld'}
             </Button>
             <Button
               onClick={handleSave}
@@ -287,28 +287,28 @@ export default function Documents() {
           {/* Lewa kolumna: Ustawienia */}
           <Card className="lg:col-span-1">
             <CardHeader>
-              <CardTitle className="text-sky-600">⚙️ Ustawienia</CardTitle>
+              <CardTitle className="text-sky-600">⚙️ Instellingen</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="doc-name">Nazwa dokumentu</Label>
+                <Label htmlFor="doc-name">Documentnaam</Label>
                 <Input
                   id="doc-name"
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  placeholder="np. Umowa o pracę - Jan Kowalski"
+                  placeholder="bijv. Arbeidscontract - Jan de Vries"
                   className="mt-1"
                 />
               </div>
 
               <div>
-                <Label htmlFor="template">Szablon</Label>
+                <Label htmlFor="template">Sjabloon</Label>
                 <Select
                   value={selectedTemplate?.id || ''}
                   onValueChange={handleTemplateSelect}
                 >
                   <SelectTrigger id="template" className="mt-1">
-                    <SelectValue placeholder="Wybierz szablon..." />
+                    <SelectValue placeholder="Selecteer sjabloon..." />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.filter(c => c.id !== 'all').map(category => (
@@ -347,7 +347,7 @@ export default function Documents() {
               )}
 
               <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-blue-700 mb-2">📎 Pola dynamiczne</h4>
+                <h4 className="font-semibold text-blue-700 mb-2">📎 Dynamische velden</h4>
                 <p className="text-sm text-gray-600 mb-2">
                   Użyj pól, które zostaną automatycznie wypełnione:
                 </p>
@@ -393,8 +393,8 @@ export default function Documents() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-sky-600">📄 Dokumenty</h1>
-        <p className="text-gray-600 mt-1">Zarządzaj dokumentami biznesowymi - umowy, CV, formularze, raporty</p>
+        <h1 className="text-3xl font-bold text-sky-600">📄 Documenten</h1>
+        <p className="text-gray-600 mt-1">Beheer zakelijke documenten - contracten, CV, formulieren, rapporten</p>
       </div>
 
       {/* Statystyki */}
@@ -411,7 +411,7 @@ export default function Documents() {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">{stats.employment}</div>
-              <div className="text-sm text-gray-600 mt-1">💼 Zatrudnienie</div>
+              <div className="text-sm text-gray-600 mt-1">💼 Werkgelegenheid</div>
             </div>
           </CardContent>
         </Card>
@@ -419,7 +419,7 @@ export default function Documents() {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600">{stats.tax}</div>
-              <div className="text-sm text-gray-600 mt-1">💰 Podatki</div>
+              <div className="text-sm text-gray-600 mt-1">💰 Belastingen</div>
             </div>
           </CardContent>
         </Card>
@@ -427,7 +427,7 @@ export default function Documents() {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-cyan-600">{stats.business}</div>
-              <div className="text-sm text-gray-600 mt-1">📧 Biznes</div>
+              <div className="text-sm text-gray-600 mt-1">📧 Zakelijk</div>
             </div>
           </CardContent>
         </Card>
@@ -441,7 +441,7 @@ export default function Documents() {
               <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Szukaj dokumentów..."
+                placeholder="Zoek documenten..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -453,7 +453,7 @@ export default function Documents() {
               className="bg-linear-to-r from-sky-500 to-blue-600 text-white gap-2"
             >
               <Plus className="h-5 w-5" />
-              Nowy dokument
+              Nieuw document
             </Button>
           </div>
 
@@ -479,27 +479,27 @@ export default function Documents() {
 
       {/* Lista dokumentów */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Ładowanie...</div>
+        <div className="text-center py-12 text-gray-500">Laden...</div>
       ) : filteredDocuments.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
             {searchTerm || selectedCategory !== 'all' ? (
               <div>
                 <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg">Nie znaleziono dokumentów</p>
-                <p className="text-sm mt-1">Spróbuj zmienić filtry</p>
+                <p className="text-lg">Geen documenten gevonden</p>
+                <p className="text-sm mt-1">Probeer de filters te wijzigen</p>
               </div>
             ) : (
               <div>
                 <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg">Brak dokumentów</p>
-                <p className="text-sm mt-1">Kliknij "Nowy dokument" aby utworzyć pierwszy</p>
+                <p className="text-lg">Geen documenten</p>
+                <p className="text-sm mt-1">Klik op "Nieuw document" om de eerste aan te maken</p>
                 <Button
                   onClick={handleNewDocument}
                   className="mt-4 bg-linear-to-r from-sky-500 to-blue-600 text-white"
                 >
                   <Plus className="h-5 w-5 mr-2" />
-                  Nowy dokument
+                  Nieuw document
                 </Button>
               </div>
             )}
@@ -548,7 +548,7 @@ export default function Documents() {
                       onClick={() => handleEditDocument(doc)}
                       className="flex-1"
                     >
-                      ✏️ Edytuj
+                      ✏️ Bewerken
                     </Button>
                     <Button
                       size="sm"

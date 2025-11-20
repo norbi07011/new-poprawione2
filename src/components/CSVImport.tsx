@@ -36,6 +36,7 @@ const PRODUCT_FIELDS = [
 ];
 
 export function CSVImport() {
+  const { t } = useTranslation();
   const { createClient } = useClients();
   const { createProduct } = useProducts();
   

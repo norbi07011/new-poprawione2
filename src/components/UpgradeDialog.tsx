@@ -21,6 +21,7 @@ interface UpgradeDialogProps {
 }
 
 export function UpgradeDialog({ isOpen, onClose, reason }: UpgradeDialogProps) {
+  const { t } = useTranslation();
   const [showActivateForm, setShowActivateForm] = useState(false);
   const [licenseKey, setLicenseKey] = useState('');
   const [isActivating, setIsActivating] = useState(false);

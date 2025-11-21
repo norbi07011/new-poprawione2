@@ -69,6 +69,10 @@ export default function Clients() {
     phone: '',
     contact_person: '',
     notes: '',
+    country: 'PL',
+    client_type: 'company',
+    kvk_number: '',
+    nip_number: '',
   });
 
   const [kvkLoading, setKvkLoading] = useState(false);
@@ -204,28 +208,32 @@ export default function Clients() {
       setFormData({
         name: client.name,
         address: client.address,
-        country: client.country || 'PL',
-        client_type: client.client_type || 'company',
+        kvk: '',
         vat_number: client.vat_number,
-        kvk_number: client.kvk_number || '',
-        nip_number: client.nip_number || '',
         email: client.email,
         phone: client.phone,
+        contact_person: '',
         notes: client.notes,
+        country: client.country || 'PL',
+        client_type: client.client_type || 'company',
+        kvk_number: client.kvk_number || '',
+        nip_number: client.nip_number || '',
       });
     } else {
       setEditingClient(null);
       setFormData({
         name: '',
         address: '',
-        country: 'PL',
-        client_type: 'company',
+        kvk: '',
         vat_number: '',
-        kvk_number: '',
-        nip_number: '',
         email: '',
         phone: '',
+        contact_person: '',
         notes: '',
+        country: 'PL',
+        client_type: 'company',
+        kvk_number: '',
+        nip_number: '',
       });
     }
     setIsDialogOpen(true);

@@ -23,25 +23,25 @@ export interface LicenseInfo {
 const PLAN_LIMITS: Record<LicensePlan, LicenseInfo> = {
   free: {
     plan: 'free',
-    maxInvoices: Infinity,
-    maxCompanies: Infinity,
+    maxInvoices: 5,
+    maxCompanies: 1,
     features: {
-      pdfExport: true,
-      cloudBackup: true,
-      multiDevice: true,
-      prioritySupport: true,
-      mobileApps: true,
+      pdfExport: false,
+      cloudBackup: false,
+      multiDevice: false,
+      prioritySupport: false,
+      mobileApps: false,
     }
   },
   starter: {
     plan: 'starter',
     maxInvoices: Infinity,
-    maxCompanies: Infinity,
+    maxCompanies: 3,
     features: {
       pdfExport: true,
-      cloudBackup: true,
+      cloudBackup: false,
       multiDevice: true,
-      prioritySupport: true,
+      prioritySupport: false,
       mobileApps: true,
     }
   },
@@ -191,7 +191,15 @@ class LicenseManagerService {
    * Sprawdź czy można utworzyć fakturę
    */
   canCreateInvoice(currentInvoiceCount: number): { allowed: boolean; message?: string } {
-    // Brak limitów - zawsze pozwalamy
+    const limit = PLAN_LIMITS[this.currentPlan].maxInvoices;
+    
+    if (currentInvoiceCount >= limit) {
+      return {
+        allowed: false,
+        message: `Osiągnięto limit ${limit} faktur dla planu ${this.currentPlan.toUpperCase()}. Upgrade do wersji premium!`
+      };
+    }
+    
     return { allowed: true };
   }
 
@@ -199,7 +207,15 @@ class LicenseManagerService {
    * Sprawdź czy można utworzyć firmę
    */
   canCreateCompany(currentCompanyCount: number): { allowed: boolean; message?: string } {
-    // Brak limitów - zawsze pozwalamy
+    const limit = PLAN_LIMITS[this.currentPlan].maxCompanies;
+    
+    if (currentCompanyCount >= limit) {
+      return {
+        allowed: false,
+        message: `Osiągnięto limit ${limit} firm dla planu ${this.currentPlan.toUpperCase()}. Upgrade do wersji premium!`
+      };
+    }
+    
     return { allowed: true };
   }
 
@@ -207,8 +223,7 @@ class LicenseManagerService {
    * Sprawdź dostęp do funkcji
    */
   hasFeature(feature: keyof LicenseInfo['features']): boolean {
-    // Wszystkie funkcje dostępne
-    return true;
+    return PLAN_LIMITS[this.currentPlan].features[feature];
   }
 
   /**

@@ -247,14 +247,6 @@ export function UpgradeDialog({ isOpen, onClose, reason }: UpgradeDialogProps) {
                 {isActivating ? 'Aktywacja...' : 'Aktywuj licencję'}
               </Button>
             </div>
-
-            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm">
-              <p className="font-semibold mb-2">💡 Testowe klucze:</p>
-              <ul className="space-y-1 font-mono text-xs">
-                <li>STARTER: <code className="bg-white dark:bg-gray-900 px-2 py-1 rounded">MESSUBOUW-STARTER-2025-TEST</code></li>
-                <li>PRO: <code className="bg-white dark:bg-gray-900 px-2 py-1 rounded">MESSUBOUW-PRO-2025-TEST</code></li>
-              </ul>
-            </div>
           </div>
         )}
       </DialogContent>
